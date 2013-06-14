@@ -1,0 +1,4 @@
+JDup
+====
+
+Duplicate finder
