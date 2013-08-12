@@ -30,26 +30,50 @@ public class DuplicateFinderWorker extends SwingWorker {
 		Iterator<File> iterator = findDups.iterator();
 		HashSet<File> foundNameDups = new HashSet<File>();
 		HashSet<File> foundSizeDups = new HashSet<File>();
+		ArrayList<PotentialDuplicates> potentialDuplicates = new ArrayList<PotentialDuplicates>();
 		while (iterator.hasNext()) {
 			File currentFile = iterator.next();
 			FileList sameNamedFiles;
 			String message = currentFile+": ";
+			PotentialDuplicates potDup = new PotentialDuplicates(currentFile);
+			boolean hasPotentialDuplicates = false;
 			if (!foundNameDups.contains(currentFile)) {
 				sameNamedFiles = masterList.getSameNamedFiles(currentFile);
-				foundNameDups.addAll(sameNamedFiles);
-				message+=" Same Name: "+sameNamedFiles;
+				if (!sameNamedFiles.isEmpty()) {
+					foundNameDups.addAll(sameNamedFiles);
+					potDup.addPotentialDuplicates(sameNamedFiles);
+					hasPotentialDuplicates = true;
+					message+=" Same Name: "+sameNamedFiles;
+				}
 			} else {
 				message+=" Same Name: skipped";
 			}
 			FileList sameSizedFiles;
 			if (!foundSizeDups.contains(currentFile)) {
 				sameSizedFiles = masterList.getSameSizedFiles(currentFile);
-				foundSizeDups.addAll(sameSizedFiles);
-				message+=" Same Size: "+sameSizedFiles;
+				if (!sameSizedFiles.isEmpty()) {
+					foundSizeDups.addAll(sameSizedFiles);
+					potDup.addPotentialDuplicates(sameSizedFiles);
+					hasPotentialDuplicates = true;
+					message += " Same Size: " + sameSizedFiles;
+				}
 			} else {
 				message+=" Same size: skipped";
 			}
+			if (hasPotentialDuplicates)
+				potentialDuplicates.add(potDup);
 			System.out.println(message);
+		}
+		
+		Iterator<PotentialDuplicates> potDupIt = potentialDuplicates.iterator();
+		while (potDupIt.hasNext()) {
+			PotentialDuplicates potDup = potDupIt.next();
+			potDup.checkDuplicates(PotentialDuplicates.COMPARE_MD5);
+			if (!potDup.hasDuplicates())
+				potDupIt.remove();
+		}
+		for (PotentialDuplicates potDup : potentialDuplicates) {
+			System.out.println(potDup);
 		}
 		return null;
 	}
