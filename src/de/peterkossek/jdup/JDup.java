@@ -131,7 +131,11 @@ public class JDup extends JFrame implements ActionListener {
 			while (elements.hasMoreElements())
 				folders.add(elements.nextElement());
 			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders);
-			worker.execute();
+			try {
+				worker.execute();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
 		}
 		
 	}
