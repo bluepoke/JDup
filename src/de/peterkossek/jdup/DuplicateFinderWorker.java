@@ -2,6 +2,7 @@ package de.peterkossek.jdup;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,11 +28,28 @@ public class DuplicateFinderWorker extends SwingWorker {
 		FileList findDups = new FileList();
 		findDups.addAll(masterList);
 		Iterator<File> iterator = findDups.iterator();
+		HashSet<File> foundNameDups = new HashSet<File>();
+		HashSet<File> foundSizeDups = new HashSet<File>();
 		while (iterator.hasNext()) {
 			File currentFile = iterator.next();
-			FileList sameNamedFiles = masterList.getSameNamedFiles(currentFile);
-			FileList sameSizedFiles = masterList.getSameSizedFiles(currentFile);
-			System.out.println(currentFile+": Same Name: "+sameNamedFiles.toString()+" Same Size: "+sameSizedFiles);
+			FileList sameNamedFiles;
+			String message = currentFile+": ";
+			if (!foundNameDups.contains(currentFile)) {
+				sameNamedFiles = masterList.getSameNamedFiles(currentFile);
+				foundNameDups.addAll(sameNamedFiles);
+				message+=" Same Name: "+sameNamedFiles;
+			} else {
+				message+=" Same Name: skipped";
+			}
+			FileList sameSizedFiles;
+			if (!foundSizeDups.contains(currentFile)) {
+				sameSizedFiles = masterList.getSameSizedFiles(currentFile);
+				foundSizeDups.addAll(sameSizedFiles);
+				message+=" Same Size: "+sameSizedFiles;
+			} else {
+				message+=" Same size: skipped";
+			}
+			System.out.println(message);
 		}
 		return null;
 	}
