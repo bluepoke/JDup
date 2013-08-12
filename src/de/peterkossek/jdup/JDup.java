@@ -72,6 +72,7 @@ public class JDup extends JFrame implements ActionListener {
 		gbc_btnRemoveFolder.gridy = 1;
 		tabDuplicates.add(btnRemoveFolder, gbc_btnRemoveFolder);
 		setLocationRelativeTo(null);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 	
 	public static void main(String[] args) {
