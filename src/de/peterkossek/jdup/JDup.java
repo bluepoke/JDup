@@ -115,6 +115,7 @@ public class JDup extends JFrame implements ActionListener {
 			int dialogResult = jfc.showOpenDialog(this);
 			if (dialogResult == JFileChooser.APPROVE_OPTION) {
 				File file = jfc.getSelectedFile();
+				lastDir = file;
 				DefaultListModel model = (DefaultListModel) folderList.getModel();
 				if (!model.contains(file)) {
 					model.addElement(file);
