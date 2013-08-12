@@ -8,6 +8,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Enumeration;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -17,12 +19,16 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
+import javax.swing.JLabel;
+import javax.swing.BoxLayout;
 
 public class JDup extends JFrame implements ActionListener {
 	private JList folderList;
 	private JButton btnAddFolder;
 	private File lastDir;
 	private JButton btnRemoveFolder;
+	private JButton btnFindDuplicates;
+	private JLabel lblStatus;
 
 	public JDup() {
 		setMinimumSize(new Dimension(600, 400));
@@ -30,6 +36,10 @@ public class JDup extends JFrame implements ActionListener {
 		
 		JPanel pnlStatus = new JPanel();
 		getContentPane().add(pnlStatus, BorderLayout.SOUTH);
+		pnlStatus.setLayout(new BorderLayout(0, 0));
+		
+		lblStatus = new JLabel("Status");
+		pnlStatus.add(lblStatus);
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		getContentPane().add(tabbedPane, BorderLayout.CENTER);
@@ -47,7 +57,7 @@ public class JDup extends JFrame implements ActionListener {
 		GridBagConstraints gbc_list = new GridBagConstraints();
 		gbc_list.gridheight = 3;
 		gbc_list.anchor = GridBagConstraints.NORTH;
-		gbc_list.insets = new Insets(0, 0, 5, 5);
+		gbc_list.insets = new Insets(0, 0, 0, 5);
 		gbc_list.fill = GridBagConstraints.HORIZONTAL;
 		gbc_list.gridx = 0;
 		gbc_list.gridy = 0;
@@ -71,8 +81,19 @@ public class JDup extends JFrame implements ActionListener {
 		gbc_btnRemoveFolder.gridx = 1;
 		gbc_btnRemoveFolder.gridy = 1;
 		tabDuplicates.add(btnRemoveFolder, gbc_btnRemoveFolder);
+		
+		btnFindDuplicates = new JButton("Find duplicates");
+		btnFindDuplicates.addActionListener(this);
+		GridBagConstraints gbc_btnFindDuplicates = new GridBagConstraints();
+		gbc_btnFindDuplicates.anchor = GridBagConstraints.SOUTH;
+		gbc_btnFindDuplicates.gridx = 1;
+		gbc_btnFindDuplicates.gridy = 2;
+		tabDuplicates.add(btnFindDuplicates, gbc_btnFindDuplicates);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		MemoryWatcher memoryWatcher = new MemoryWatcher(lblStatus);
+		memoryWatcher.execute();
 	}
 	
 	public static void main(String[] args) {
@@ -103,6 +124,14 @@ public class JDup extends JFrame implements ActionListener {
 			Object selectedValue = folderList.getSelectedValue();
 			DefaultListModel model = (DefaultListModel) folderList.getModel();
 			model.removeElement(selectedValue);
+		} else if (source.equals(btnFindDuplicates)) {
+			
+			Enumeration<File> elements = (Enumeration<File>) ((DefaultListModel)folderList.getModel()).elements();
+			ArrayList<File> folders = new ArrayList<File>();
+			while (elements.hasMoreElements())
+				folders.add(elements.nextElement());
+			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders);
+			worker.execute();
 		}
 		
 	}
