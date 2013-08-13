@@ -23,7 +23,8 @@ import javax.swing.JLabel;
 import javax.swing.BoxLayout;
 import javax.swing.JProgressBar;
 
-public class JDup extends JFrame implements ActionListener, StatusDisplay {
+public class JDup extends JFrame implements ActionListener, StatusDisplay, MemoryDisplay {
+	private static final String TITLE = "DuplicateFinder";
 	private JList folderList;
 	private JButton btnAddFolder;
 	private File lastDir;
@@ -34,7 +35,7 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay {
 
 	public JDup() {
 		setMinimumSize(new Dimension(600, 400));
-		setTitle("DuplicateFinder");
+		setTitle(TITLE);
 		
 		JPanel pnlStatus = new JPanel();
 		getContentPane().add(pnlStatus, BorderLayout.SOUTH);
@@ -94,8 +95,8 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay {
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
-//		MemoryWatcher memoryWatcher = new MemoryWatcher(lblStatus);
-//		memoryWatcher.execute();
+		MemoryWatcher memoryWatcher = new MemoryWatcher(this);
+		memoryWatcher.execute();
 		
 		progressBar = new JProgressBar();
 		pnlStatus.add(progressBar, BorderLayout.NORTH);
@@ -154,6 +155,11 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay {
 		progressBar.setMaximum(max);
 		progressBar.setValue(value);
 		progressBar.setIndeterminate(indeterminate);
+	}
+
+	@Override
+	public void displayMemory(String memoryMessage) {
+		this.setTitle(TITLE+" ("+memoryMessage+")");
 	}
 
 }
