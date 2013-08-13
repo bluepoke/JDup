@@ -21,14 +21,16 @@ import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import javax.swing.JLabel;
 import javax.swing.BoxLayout;
+import javax.swing.JProgressBar;
 
-public class JDup extends JFrame implements ActionListener {
+public class JDup extends JFrame implements ActionListener, StatusDisplay {
 	private JList folderList;
 	private JButton btnAddFolder;
 	private File lastDir;
 	private JButton btnRemoveFolder;
 	private JButton btnFindDuplicates;
 	private JLabel lblStatus;
+	private JProgressBar progressBar;
 
 	public JDup() {
 		setMinimumSize(new Dimension(600, 400));
@@ -92,8 +94,11 @@ public class JDup extends JFrame implements ActionListener {
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
-		MemoryWatcher memoryWatcher = new MemoryWatcher(lblStatus);
-		memoryWatcher.execute();
+//		MemoryWatcher memoryWatcher = new MemoryWatcher(lblStatus);
+//		memoryWatcher.execute();
+		
+		progressBar = new JProgressBar();
+		pnlStatus.add(progressBar, BorderLayout.NORTH);
 	}
 	
 	public static void main(String[] args) {
@@ -131,7 +136,7 @@ public class JDup extends JFrame implements ActionListener {
 			ArrayList<File> folders = new ArrayList<File>();
 			while (elements.hasMoreElements())
 				folders.add(elements.nextElement());
-			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders);
+			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders, this);
 			try {
 				worker.execute();
 			} catch (Exception ex) {
@@ -139,6 +144,16 @@ public class JDup extends JFrame implements ActionListener {
 			}
 		}
 		
+	}
+
+	@Override
+	public void displayStatus(String message, int min, int max, int value,
+			boolean indeterminate) {
+		lblStatus.setText(message);
+		progressBar.setMinimum(min);
+		progressBar.setMaximum(max);
+		progressBar.setValue(value);
+		progressBar.setIndeterminate(indeterminate);
 	}
 
 }

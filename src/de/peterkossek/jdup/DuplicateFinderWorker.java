@@ -8,18 +8,21 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
-public class DuplicateFinderWorker extends SwingWorker {
+public class DuplicateFinderWorker extends SwingWorker<List<PotentialDuplicates>, WorkerProgress> {
 
 	private List<File> folders;
+	private StatusDisplay display;
 
-	public DuplicateFinderWorker(List<File> folders) {
+	public DuplicateFinderWorker(List<File> folders, StatusDisplay display) {
 		this.folders = folders;
+		this.display = display;
 	}
 	
 	@Override
-	protected Object doInBackground() throws Exception {
+	protected List<PotentialDuplicates> doInBackground() throws Exception {
 		// find all files in the folders
 		FileList masterList = new FileList();
+		publish(new WorkerProgress("Reading all files in the folders",0,1,0,true));
 		for (File folder : folders) {
 			masterList.addAll(getAllFiles(folder));
 		}
@@ -27,12 +30,12 @@ public class DuplicateFinderWorker extends SwingWorker {
 		// find duplicates
 		FileList findDups = new FileList();
 		findDups.addAll(masterList);
-		Iterator<File> iterator = findDups.iterator();
 		HashSet<File> foundNameDups = new HashSet<File>();
 		HashSet<File> foundSizeDups = new HashSet<File>();
 		ArrayList<PotentialDuplicates> potentialDuplicates = new ArrayList<PotentialDuplicates>();
-		while (iterator.hasNext()) {
-			File currentFile = iterator.next();
+		for (int i=0; i<findDups.size(); i++) {
+			File currentFile = findDups.get(i);
+			publish(new WorkerProgress("Finding duplicates for "+currentFile.getAbsolutePath(),0,findDups.size(),i+1,false));
 			FileList sameNamedFiles;
 			String message = currentFile+": ";
 			PotentialDuplicates potDup = new PotentialDuplicates(currentFile);
@@ -68,6 +71,8 @@ public class DuplicateFinderWorker extends SwingWorker {
 		Iterator<PotentialDuplicates> potDupIt = potentialDuplicates.iterator();
 		while (potDupIt.hasNext()) {
 			PotentialDuplicates potDup = potDupIt.next();
+			int i = potentialDuplicates.indexOf(potDup);
+			publish(new WorkerProgress("Checking duplicates of "+potDup.source.getAbsolutePath(),0,potentialDuplicates.size(),i+1,false));
 			potDup.checkDuplicates(PotentialDuplicates.COMPARE_MD5);
 			if (!potDup.hasDuplicates())
 				potDupIt.remove();
@@ -75,7 +80,8 @@ public class DuplicateFinderWorker extends SwingWorker {
 		for (PotentialDuplicates potDup : potentialDuplicates) {
 			System.out.println(potDup);
 		}
-		return null;
+		publish(new WorkerProgress("Finished analysing folders for duplicates.", 0, 1, 1, false));
+		return potentialDuplicates;
 	}
 
 	private List<File> getAllFiles(File folder) {
@@ -89,6 +95,14 @@ public class DuplicateFinderWorker extends SwingWorker {
 				list.addAll(getAllFiles(file));
 		}
 		return list;
+	}
+	
+	@Override
+	protected void process(List<WorkerProgress> progresses) {
+		for (WorkerProgress wp : progresses) {
+			display.displayStatus(wp.percentage()+" "+wp.message, wp.min, wp.max, wp.value, wp.indeterminate);
+			System.out.println(wp);
+		}
 	}
 
 }
