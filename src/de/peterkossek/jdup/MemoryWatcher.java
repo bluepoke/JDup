@@ -1,8 +1,11 @@
 package de.peterkossek.jdup;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import javax.swing.SwingWorker;
 
-public class MemoryWatcher extends SwingWorker {
+public class MemoryWatcher implements ActionListener {
 
 	private final double mb = 1024*1024;
 	private MemoryDisplay display;
@@ -12,16 +15,12 @@ public class MemoryWatcher extends SwingWorker {
 	}
 
 	@Override
-	protected Object doInBackground() throws Exception {
+	public void actionPerformed(ActionEvent arg0) {
 		Runtime rt = Runtime.getRuntime();
-		while (!isCancelled()) {
-			double free = rt.freeMemory() / mb;
-			double total = rt.totalMemory() / mb;
-			double used = total - free;
-			display.displayMemory(String.format("Used: %.2f MB, Free: %.2f MB", used, free));
-			Thread.sleep(1000);
-		}
-		return null;
+		double free = rt.freeMemory() / mb;
+		double total = rt.totalMemory() / mb;
+		double used = total - free;
+		display.displayMemory(String.format("Used: %.2f MB, Free: %.2f MB", used, free));
 	}
 
 }

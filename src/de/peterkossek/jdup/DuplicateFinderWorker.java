@@ -2,9 +2,13 @@ package de.peterkossek.jdup;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.swing.SwingWorker;
 
@@ -21,67 +25,37 @@ public class DuplicateFinderWorker extends SwingWorker<List<PotentialDuplicates>
 	@Override
 	protected List<PotentialDuplicates> doInBackground() throws Exception {
 		// find all files in the folders
-		FileList masterList = new FileList();
+		FileMapper fileMapper = new FileMapper();
 		publish(new WorkerProgress("Reading all files in the folders",0,1,0,true));
+		Set<File> masterSet = new HashSet<File>();
 		for (File folder : folders) {
-			masterList.addAll(getAllFiles(folder));
+			masterSet.addAll(getAllFiles(folder));
 		}
+		ArrayList<File> masterList = new ArrayList<File>(masterSet);
 		System.out.println(masterList.size());
 		// find duplicates
-		FileList findDups = new FileList();
-		findDups.addAll(masterList);
-		HashSet<File> foundNameDups = new HashSet<File>();
-		HashSet<File> foundSizeDups = new HashSet<File>();
-		ArrayList<PotentialDuplicates> potentialDuplicates = new ArrayList<PotentialDuplicates>();
-		for (int i=0; i<findDups.size(); i++) {
-			File currentFile = findDups.get(i);
-			publish(new WorkerProgress("Finding duplicates for "+currentFile.getAbsolutePath(),0,findDups.size(),i+1,false));
-			FileList sameNamedFiles;
-			String message = currentFile+": ";
-			PotentialDuplicates potDup = new PotentialDuplicates(currentFile);
-			boolean hasPotentialDuplicates = false;
-			if (!foundNameDups.contains(currentFile)) {
-				sameNamedFiles = masterList.getSameNamedFiles(currentFile);
-				if (!sameNamedFiles.isEmpty()) {
-					foundNameDups.addAll(sameNamedFiles);
-					potDup.addPotentialDuplicates(sameNamedFiles);
-					hasPotentialDuplicates = true;
-					message+=" Same Name: "+sameNamedFiles;
-				}
-			} else {
-				message+=" Same Name: skipped";
-			}
-			FileList sameSizedFiles;
-			if (!foundSizeDups.contains(currentFile)) {
-				sameSizedFiles = masterList.getSameSizedFiles(currentFile);
-				if (!sameSizedFiles.isEmpty()) {
-					foundSizeDups.addAll(sameSizedFiles);
-					potDup.addPotentialDuplicates(sameSizedFiles);
-					hasPotentialDuplicates = true;
-					message += " Same Size: " + sameSizedFiles;
-				}
-			} else {
-				message+=" Same size: skipped";
-			}
-			if (hasPotentialDuplicates)
-				potentialDuplicates.add(potDup);
-			System.out.println(message);
+		for (int i=0; i<masterList.size(); i++) {
+			File currentFile = masterList.get(i);
+			publish(new WorkerProgress("Finding duplicates for "+currentFile.getAbsolutePath(),0,masterList.size(),i+1,false));
+			fileMapper.add(currentFile);
 		}
 		
-		Iterator<PotentialDuplicates> potDupIt = potentialDuplicates.iterator();
-		while (potDupIt.hasNext()) {
-			PotentialDuplicates potDup = potDupIt.next();
-			int i = potentialDuplicates.indexOf(potDup);
-			publish(new WorkerProgress("Checking duplicates of "+potDup.source.getAbsolutePath(),0,potentialDuplicates.size(),i+1,false));
-			potDup.checkDuplicates(PotentialDuplicates.COMPARE_MD5);
-			if (!potDup.hasDuplicates())
-				potDupIt.remove();
+		publish(new WorkerProgress("Cleaning up collected data...",0,1,0,true));
+		fileMapper.cleanUp();
+		
+		Map<String, Set<File>> nameMap = fileMapper.getNameMap();
+		System.out.println("Total name duplicates "+nameMap.size());
+		for (Entry<String, Set<File>> entry : nameMap.entrySet()) {
+			System.out.println(entry.getKey()+" : "+entry.getValue());
 		}
-		for (PotentialDuplicates potDup : potentialDuplicates) {
-			System.out.println(potDup);
+		
+		Map<Long, Set<File>> sizeMap = fileMapper.getSizeMap();
+		System.out.println("Total size duplicates "+sizeMap.size());
+		for (Entry<Long, Set<File>> entry : sizeMap.entrySet()) {
+			System.out.println(entry.getKey()+" : "+entry.getValue());
 		}
 		publish(new WorkerProgress("Finished analysing folders for duplicates.", 0, 1, 1, false));
-		return potentialDuplicates;
+		return null;
 	}
 
 	private List<File> getAllFiles(File folder) {

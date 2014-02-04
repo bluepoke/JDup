@@ -18,6 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.JLabel;
 import javax.swing.BoxLayout;
@@ -96,8 +97,8 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		MemoryWatcher memoryWatcher = new MemoryWatcher(this);
-		memoryWatcher.execute();
-		
+		Timer t = new Timer(1000, memoryWatcher);
+		t.start();
 		progressBar = new JProgressBar();
 		pnlStatus.add(progressBar, BorderLayout.NORTH);
 	}
@@ -117,14 +118,16 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 		if (source.equals(btnAddFolder)) {
 			JFileChooser jfc = new JFileChooser(lastDir);
 			jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			jfc.setMultiSelectionEnabled(false);
+			jfc.setMultiSelectionEnabled(true);
 			int dialogResult = jfc.showOpenDialog(this);
 			if (dialogResult == JFileChooser.APPROVE_OPTION) {
-				File file = jfc.getSelectedFile();
-				lastDir = file;
-				DefaultListModel model = (DefaultListModel) folderList.getModel();
-				if (!model.contains(file)) {
-					model.addElement(file);
+				File[] files = jfc.getSelectedFiles();
+				for (File file : files) {
+					DefaultListModel model = (DefaultListModel) folderList.getModel();
+					if (!model.contains(file)) {
+						model.addElement(file);
+					}
+					lastDir = file;
 				}
 			}
 		} else if (source.equals(btnRemoveFolder)) {
