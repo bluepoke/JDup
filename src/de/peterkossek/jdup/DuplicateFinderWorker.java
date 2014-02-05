@@ -12,18 +12,20 @@ import java.util.Set;
 
 import javax.swing.SwingWorker;
 
-public class DuplicateFinderWorker extends SwingWorker<List<PotentialDuplicates>, WorkerProgress> {
+public class DuplicateFinderWorker extends SwingWorker<List<Duplicate>, WorkerProgress> {
 
 	private List<File> folders;
 	private StatusDisplay display;
+	private ComparationMethod	comparationMethod;
 
-	public DuplicateFinderWorker(List<File> folders, StatusDisplay display) {
+	public DuplicateFinderWorker(List<File> folders, StatusDisplay display, ComparationMethod method) {
 		this.folders = folders;
 		this.display = display;
+		this.comparationMethod = method;
 	}
 	
 	@Override
-	protected List<PotentialDuplicates> doInBackground() throws Exception {
+	protected  List<Duplicate> doInBackground() throws Exception {
 		// find all files in the folders
 		FileMapper fileMapper = new FileMapper();
 		publish(new WorkerProgress("Reading all files in the folders",0,1,0,true));
@@ -43,19 +45,51 @@ public class DuplicateFinderWorker extends SwingWorker<List<PotentialDuplicates>
 		publish(new WorkerProgress("Cleaning up collected data...",0,1,0,true));
 		fileMapper.cleanUp();
 		
+		List<Duplicate> duplicates = new ArrayList<Duplicate>();
+		
 		Map<String, Set<File>> nameMap = fileMapper.getNameMap();
 		System.out.println("Total name duplicates "+nameMap.size());
-		for (Entry<String, Set<File>> entry : nameMap.entrySet()) {
-			System.out.println(entry.getKey()+" : "+entry.getValue());
-		}
 		
 		Map<Long, Set<File>> sizeMap = fileMapper.getSizeMap();
 		System.out.println("Total size duplicates "+sizeMap.size());
-		for (Entry<Long, Set<File>> entry : sizeMap.entrySet()) {
-			System.out.println(entry.getKey()+" : "+entry.getValue());
+		
+		int nSize = nameMap.size();
+		int current = 0;
+		for (Set<File> set : nameMap.values()) {
+			current++;
+			File[] files = set.toArray(new File[set.size()]);
+			for (int i=0; i<files.length-1; i++) {
+				for (int j=i+1; j<files.length; j++) {
+					File fileA = files[i];
+					File fileB = files[j];
+					if (comparationMethod.filesEqual(fileA, fileB)) {
+						duplicates.add(new Duplicate(fileA, fileB));
+					}
+				}
+			}
+			publish(new WorkerProgress("Comparing files with same name using "+comparationMethod.toString(), 0, nSize, current, false));
 		}
+		
+		int sSize = sizeMap.size();
+		current = 0;
+		for (Set<File> set : sizeMap.values()) {
+			current++;
+			File[] files = set.toArray(new File[set.size()]);
+			for (int i=0; i<files.length-1; i++) {
+				for (int j=i+1; j<files.length; j++) {
+					File fileA = files[i];
+					File fileB = files[j];
+					Duplicate duplicate = new Duplicate(fileA, fileB);
+					if (!duplicates.contains(duplicate) && comparationMethod.filesEqual(fileA, fileB)) {
+						duplicates.add(duplicate);
+					}
+				}
+			}
+			publish(new WorkerProgress("Comparing files with same size using "+comparationMethod.toString(), 0, sSize, current, false));
+		}
+		
 		publish(new WorkerProgress("Finished analysing folders for duplicates.", 0, 1, 1, false));
-		return null;
+		return duplicates;
 	}
 
 	private List<File> getAllFiles(File folder) {

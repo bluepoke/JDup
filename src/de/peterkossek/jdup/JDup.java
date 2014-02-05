@@ -35,6 +35,7 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 	private JProgressBar progressBar;
 
 	public JDup() {
+		
 		setMinimumSize(new Dimension(600, 400));
 		setTitle(TITLE);
 		
@@ -140,7 +141,7 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 			ArrayList<File> folders = new ArrayList<File>();
 			while (elements.hasMoreElements())
 				folders.add(elements.nextElement());
-			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders, this);
+			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders, this, new MD5Comparation());
 			try {
 				worker.execute();
 			} catch (Exception ex) {
