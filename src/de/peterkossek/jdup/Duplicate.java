@@ -22,4 +22,9 @@ public class Duplicate {
 		}
 		return false;
 	}
+	
+	@Override
+	public String toString() {
+		return fileA.toString()+" = "+fileB.toString();
+	}
 }

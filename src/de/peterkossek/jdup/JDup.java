@@ -7,9 +7,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -24,7 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.BoxLayout;
 import javax.swing.JProgressBar;
 
-public class JDup extends JFrame implements ActionListener, StatusDisplay, MemoryDisplay {
+public class JDup extends JFrame implements ActionListener, StatusDisplay, MemoryDisplay, PropertyChangeListener {
 	private static final String TITLE = "DuplicateFinder";
 	private JList folderList;
 	private JButton btnAddFolder;
@@ -142,6 +146,7 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 			while (elements.hasMoreElements())
 				folders.add(elements.nextElement());
 			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders, this, new MD5Comparation());
+			worker.addPropertyChangeListener(this);
 			try {
 				worker.execute();
 			} catch (Exception ex) {
@@ -164,6 +169,26 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 	@Override
 	public void displayMemory(String memoryMessage) {
 		this.setTitle(TITLE+" ("+memoryMessage+")");
+	}
+
+	@Override
+	public void propertyChange(PropertyChangeEvent pce) {
+		Object source = pce.getSource();
+		if (source instanceof DuplicateFinderWorker) {
+			DuplicateFinderWorker worker = (DuplicateFinderWorker) source;
+			if (worker.isDone()) {
+				try {
+					List<Duplicate> duplicates = worker.get();
+					System.out.println(duplicates);
+					System.out.println(duplicates.size());
+					//TODO: display duplicates in new window
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 }
