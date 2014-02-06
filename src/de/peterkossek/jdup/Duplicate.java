@@ -27,4 +27,12 @@ public class Duplicate {
 	public String toString() {
 		return fileA.toString()+" = "+fileB.toString();
 	}
+
+	public File getFileA() {
+		return fileA;
+	}
+	
+	public File getFileB() {
+		return fileB;
+	}
 }

@@ -183,7 +183,7 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 					List<Duplicate> duplicates = worker.get();
 					System.out.println(duplicates);
 					System.out.println(duplicates.size());
-					//TODO: display duplicates in new window
+					ResultWindow rw = new ResultWindow(duplicates);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} catch (ExecutionException e) {
