@@ -14,13 +14,13 @@ import javax.swing.SwingWorker;
 
 public class DuplicateFinderWorker extends SwingWorker<List<Duplicate>, WorkerProgress> {
 
+	public static final String	WORKER_FINISHED	= "WORKER_FINISHED";
+	public static final String	PROGRESS	= "PROGRESS";
 	private List<File> folders;
-	private StatusDisplay display;
 	private ComparationMethod	comparationMethod;
 
-	public DuplicateFinderWorker(List<File> folders, StatusDisplay display, ComparationMethod method) {
+	public DuplicateFinderWorker(List<File> folders, ComparationMethod method) {
 		this.folders = folders;
-		this.display = display;
 		this.comparationMethod = method;
 	}
 	
@@ -108,9 +108,13 @@ public class DuplicateFinderWorker extends SwingWorker<List<Duplicate>, WorkerPr
 	@Override
 	protected void process(List<WorkerProgress> progresses) {
 		for (WorkerProgress wp : progresses) {
-			display.displayStatus(wp.percentage()+" "+wp.message, wp.min, wp.max, wp.value, wp.indeterminate);
-			System.out.println(wp);
+			firePropertyChange(PROGRESS, null, wp);
 		}
+	}
+	
+	@Override
+	protected void done() {
+		firePropertyChange(WORKER_FINISHED, false, true);
 	}
 
 }

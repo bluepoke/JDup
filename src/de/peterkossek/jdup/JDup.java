@@ -145,7 +145,7 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 			ArrayList<File> folders = new ArrayList<File>();
 			while (elements.hasMoreElements())
 				folders.add(elements.nextElement());
-			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders, this, new MD5Comparation());
+			DuplicateFinderWorker worker = new DuplicateFinderWorker(folders, new MD5Comparation());
 			worker.addPropertyChangeListener(this);
 			try {
 				worker.execute();
@@ -175,8 +175,10 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 	public void propertyChange(PropertyChangeEvent pce) {
 		Object source = pce.getSource();
 		if (source instanceof DuplicateFinderWorker) {
+			String propertyName = pce.getPropertyName();
+			Object newValue = pce.getNewValue();
 			DuplicateFinderWorker worker = (DuplicateFinderWorker) source;
-			if (worker.isDone()) {
+			if (propertyName.equals(DuplicateFinderWorker.WORKER_FINISHED) && newValue.equals(true)) {
 				try {
 					List<Duplicate> duplicates = worker.get();
 					System.out.println(duplicates);
@@ -187,6 +189,9 @@ public class JDup extends JFrame implements ActionListener, StatusDisplay, Memor
 				} catch (ExecutionException e) {
 					e.printStackTrace();
 				}
+			} else if (propertyName.equals(DuplicateFinderWorker.PROGRESS)) {
+				WorkerProgress wp = (WorkerProgress) newValue;
+				displayStatus(wp.message, wp.min, wp.max, wp.value, wp.indeterminate);
 			}
 		}
 	}
